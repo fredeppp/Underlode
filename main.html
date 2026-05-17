@@ -127,7 +127,7 @@
 
         // --- SISTEMA MULTIPLAYER (WEBSOCKET CLIENT) ---
         // Se for jogar com amigos em outra rede, mude 'localhost' para o IP do seu computador na rede
-        const socket = new WebSocket('ws://localhost:8765'); 
+        const socket = new WebSocket('wss://underlode-server.onrender.com');
 
         socket.onopen = () => {
             const status = document.getElementById('netStatus');
