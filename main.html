@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Underlode.io - Multiplayer Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { background: #0c0605; color: #d7ccc8; font-family: 'Courier New', Courier, monospace; overflow: hidden; height: 100vh; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        .hud-top { position: absolute; top: 20px; left: 20px; background: rgba(23, 13, 10, 0.95); padding: 18px; border: 2px solid #5d4037; border-radius: 6px; pointer-events: none; box-shadow: 0 10px 25px rgba(0,0,0,0.7); z-index: 10; }
+        .hud-top h1 { font-size: 1.4rem; color: #ffb300; margin-bottom: 8px; letter-spacing: 2px; text-shadow: 1px 1px 3px #000; }
+        .hud-top p { font-size: 0.95rem; margin: 4px 0; color: #bcaaa4; }
+        .hud-time { position: absolute; top: 20px; right: 20px; background: rgba(10, 15, 28, 0.95); padding: 15px; border: 2px solid #3949ab; border-radius: 6px; text-align: right; box-shadow: 0 10px 25px rgba(0,0,0,0.7); z-index: 10; }
+        #tpBtn { position: absolute; bottom: 25px; right: 25px; background: linear-gradient(to bottom, #3949ab 0%, #1a237e 100%); color: #fff; border: 2px solid #1a237e; padding: 12px 24px; font-family: monospace; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #0d1242; border-radius: 4px; z-index: 15; text-transform: uppercase; }
+        #tpBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #0d1242; }
+        .menu-tip { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: rgba(17, 9, 7, 0.9); padding: 10px 22px; border: 2px dashed #ffb300; border-radius: 4px; font-size: 1rem; color: #fff; pointer-events: none; z-index: 5; text-align: center; }
+        #deathScreen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(13, 2, 2, 0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(4px); }
+        #deathScreen h2 { color: #ff3333; font-size: 2.5rem; margin-bottom: 10px; }
+        #respawnBtn { background: linear-gradient(to bottom, #ff3333 0%, #990000 100%); color: white; border: 2px solid #500; padding: 14px 28px; font-family: monospace; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .overlay-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 750px; max-width: 95vw; background: #1a0f0c; border: 4px solid #5d4037; box-shadow: 0 0 50px rgba(0,0,0,0.95); padding: 25px; display: none; flex-direction: column; gap: 15px; z-index: 100; border-radius: 4px; }
+        .overlay-menu h2 { font-size: 1.4rem; color: #ffb300; text-align: center; text-transform: uppercase; border-bottom: 2px solid #3e2723; padding-bottom: 8px; }
+        .menu-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
+        .inventory-section { background: #0f0705; padding: 10px; border: 2px solid #2d1a15; border-radius: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 160px; overflow-y: auto; }
+        .inventory-item { display: flex; justify-content: space-between; padding: 4px 8px; background: #170d0b; font-size: 0.85rem; }
+        #sellAllBtn { background: linear-gradient(to bottom, #ffca28 0%, #b57c00 100%); color: #120a07; border: 1px solid #5e3e00; padding: 10px; font-family: monospace; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .section-title { font-size: 0.9rem; color: #ffca28; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        .list-container { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+        .item-card { background: #251612; border: 1px solid #4e342e; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+        .item-info p { font-size: 0.9rem; font-weight: bold; color: #ffe0b2; }
+        .item-info span { font-size: 0.75rem; color: #a1887f; }
+        .buy-btn { background: linear-gradient(to bottom, #5d4037 0%, #3e2723 100%); color: #ffb300; border: 1px solid #2d1a15; padding: 6px 12px; font-family: monospace; font-weight: bold; cursor: pointer; min-width: 75px; }
+        .buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        #netStatus { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="hud-top">
+        <h1>UNDERLODE.IO</h1>
+        <p>Vida: <span id="hudHp" style="color:#ff3333; font-weight:bold;">100</span>/100</p>
+        <p>Profundidade: <span id="hudDepth">0</span>m</p>
+        <p>Ouro Comercial: <span id="hudMoney" style="color:#ffb300; font-weight:bold;">$0</span></p>
+        <p>Mochila: <span id="hudWeight">0</span> / <span id="hudMaxWeight">15</span> kg</p>
+        <p>Rede: <span id="netStatus" style="color:#ff3333;">Desconectado</span></p>
+    </div>
+
+    <div class="hud-time">
+        <div id="timePhase" style="color: #ffb300;">☀️ DIA</div>
+        <p style="color: #8c9eff; font-size: 0.85rem; margin-top: 4px;">Próxima Fase: <span id="timeClock">30</span>s</p>
+    </div>
+
+    <div class="menu-tip">Pressione [ E ] para Mercado & Upgrades<br><span style="color:#ffb300; font-size:0.85rem;">Clique Esquerdo: Minar | Clique Direito: Construir Bloco de Pedra</span></div>
+
+    <button id="tpBtn">Superfície ($5)</button>
+
+    <div id="deathScreen">
+        <h2>VOCÊ MORREU</h2>
+        <p>A gravidade te pegou. Mas os olhos também?</p>
+        <button id="respawnBtn">Renascer</button>
+    </div>
+
+    <div class="overlay-menu" id="upgradeMenu">
+        <h2>Oficina e Despensa de Mineração [E]</h2>
+        <div class="inventory-section" id="invDisplay"></div>
+        <button id="sellAllBtn">Liquidar Minérios</button>
+        
+        <div class="menu-grid">
+            <div>
+                <div class="section-title">Melhorias de Equipamento</div>
+                <div class="list-container">
+                    <div class="item-card">
+                        <div class="item-info"><p>Têmpera da Lâmina</p><span id="lbl-up1">Dano +1</span></div>
+                        <button class="buy-btn" id="btn-up1">$15</button>
+                    </div>
+                    <div class="item-card">
+                        <div class="item-info"><p>Botas de Corrida</p><span id="lbl-up2">Velocidade +15%</span></div>
+                        <button class="buy-btn" id="btn-up2">$25</button>
+                    </div>
+                    <div class="item-card">
+                        <div class="item-info"><p>Cabo Estendido</p><span id="lbl-up3">Alcance +20%</span></div>
+                        <button class="buy-btn" id="btn-up3">$30</button>
+                    </div>
+                    <div class="item-card">
+                        <div class="item-info"><p>Sacola de Bisão</p><span id="lbl-up4">Carga +10kg</span></div>
+                        <button class="buy-btn" id="btn-up4">$20</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="section-title">Mercearia (Recuperar Vida)</div>
+                <div class="list-container">
+                    <div class="item-card">
+                        <div class="item-info"><p>🍪 Cookie</p><span>+10 de Vida</span></div>
+                        <button class="buy-btn" id="btn-food-cookie">$3</button>
+                    </div>
+                    <div class="item-card">
+                        <div class="item-info"><p>🍞 Pão Integral</p><span>+50 de Vida</span></div>
+                        <button class="buy-btn" id="btn-food-bread">$12</button>
+                    </div>
+                    <div class="item-card">
+                        <div class="item-info"><p>🍗 Frango Assado</p><span>+100 de Vida</span></div>
+                        <button class="buy-btn" id="btn-food-chicken">$20</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        const TILE_SIZE = 52;
+        const GRAVITY = 0.38;
+        const MAX_FALL_SPEED = 14;
+        const JUMP_FORCE = -8.2;
+        
+        let brokenBlocks = {}; 
+        let lastRegenTime = Date.now();
+        let otherPlayers = {}; // Guarda as posições dos outros players online
+
+        // --- SISTEMA MULTIPLAYER (WEBSOCKET CLIENT) ---
+        // Se for jogar com amigos em outra rede, mude 'localhost' para o IP do seu computador na rede
+        const socket = new WebSocket('ws://localhost:8765'); 
+
+        socket.onopen = () => {
+            const status = document.getElementById('netStatus');
+            status.textContent = "Conectado"; status.style.color = "#2ecc71";
+        };
+
+        socket.onmessage = (event) => {
+            let data = JSON.parse(event.data);
+            
+            if (data.type === "init") {
+                // Carrega o mapa com as alterações que já existiam no servidor
+                brokenBlocks = data.world;
+            }
+            else if (data.type === "state") {
+                // Atualiza a posição dos outros e o mapa global
+                otherPlayers = data.players;
+                Object.assign(brokenBlocks, data.world);
+            }
+            else if (data.type === "disconnect") {
+                // Remove o fantasma do jogador desconectado
+                delete otherPlayers[data.id];
+            }
+        };
+
+        socket.onerror = () => {
+            const status = document.getElementById('netStatus');
+            status.textContent = "Erro"; status.style.color = "#ff3333";
+        };
+
+        let game = {
+            money: 15, menuOpen: false, isDead: false,
+            timeSystem: { phase: "dia", timer: 30 * 60, maxDuration: 30 * 60 },
+            player: {
+                x: 100, y: -200, vx: 0, vy: 0, radius: 16, speed: 3.5, friction: 0.82, angle: 0,
+                miningSwing: 0, isMining: false, hp: 100, maxHp: 100, invulnFrames: 0, grounded: false
+            },
+            upgrades: {
+                damage: { lvl: 1, cost: 15 }, speed: { lvl: 1, cost: 25 },
+                range: { lvl: 1, cost: 30 }, cargo: { lvl: 1, maxWeight: 15, cost: 20 }
+            },
+            inventory: { stone: 5, copper: 0, iron: 0, gold: 0, emerald: 0, sapphire: 0, ruby: 0, diamond: 0, uranium: 0 }
+        };
+
+        const oreTypes = {
+            0: { id: 'air', color: "#0c0605", solid: false },
+            1: { id: 'stone', color: "#5d4037", border: "#352421", val: 1, hp: 3, solid: true },
+            2: { id: 'copper', color: "#d35400", border: "#873600", val: 5, hp: 6, solid: true },
+            3: { id: 'iron', color: "#7ea1b0", border: "#4f656f", val: 15, hp: 12, solid: true },
+            4: { id: 'gold', color: "#fab1a0", border: "#e17055", val: 40, hp: 18, solid: true },
+            5: { id: 'emerald', color: "#2ecc71", border: "#27ae60", val: 80, hp: 25, solid: true },
+            6: { id: 'sapphire', color: "#2980b9", border: "#1f3a60", val: 130, hp: 32, solid: true },
+            7: { id: 'ruby', color: "#e74c3c", border: "#c0392b", val: 200, hp: 40, solid: true },
+            8: { id: 'diamond', color: "#00cec9", border: "#008b8b", val: 400, hp: 55, solid: true },
+            9: { id: 'uranium', color: "#a3cb38", border: "#006400", val: 800, hp: 75, solid: true },
+            10:{ id: 'grass', color: "#2ecc71", border: "#27ae60", val: 0, hp: 2, solid: true }
+        };
+
+        let particles = []; let enemies = [];
+
+        function getBlockAt(x, y) {
+            let key = `${x},${y}`;
+            if (brokenBlocks[key] !== undefined) return brokenBlocks[key];
+            if (y < 0) return { type: 0, hp: 0, maxHp: 0 }; 
+            if (y === 0) return { type: 10, hp: 2, maxHp: 2 };
+            let n1 = Math.sin(x * 0.15) * Math.cos(y * 0.15); let n2 = Math.sin(x * 0.05) * Math.sin(y * 0.03);
+            let noise = (n1 + n2) / 2;
+            if (noise > 0.18 && y > 2) return { type: 0, hp: 0, maxHp: 0 };
+            let blockType = 1; let seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233)) * 43758.5453; let rand = seed - Math.floor(seed);
+            if (y > 200) { if (rand < 0.03) blockType = 9; else if (rand < 0.07) blockType = 8; else if (rand < 0.15) blockType = 7; }
+            else if (y > 100) { if (rand < 0.04) blockType = 8; else if (rand < 0.10) blockType = 6; else if (rand < 0.20) blockType = 5; }
+            else if (y > 40) { if (rand < 0.08) blockType = 4; else if (rand < 0.22) blockType = 3; }
+            else if (y > 4) { if (rand < 0.15) blockType = 2; }
+            let baseHp = oreTypes[blockType].hp;
+            return { type: blockType, hp: baseHp + Math.floor(y / 15), maxHp: baseHp + Math.floor(y / 15) };
+        }
+
+        function manageDynamicEnemies() {
+            if (enemies.length < 15 && Math.random() < 0.02) {
+                let pTileX = Math.floor(game.player.x / TILE_SIZE); let pTileY = Math.floor(game.player.y / TILE_SIZE);
+                let rx = pTileX + (Math.floor(Math.random() * 24) - 12); let ry = pTileY + (Math.floor(Math.random() * 16) - 8);
+                if (Math.hypot(pTileX - rx, pTileY - ry) > 6) {
+                    let block = getBlockAt(rx, ry); let blockBelow = getBlockAt(rx, ry + 1);
+                    let type = "zombie";
+                    if (ry > 80 && Math.random() < 0.4) type = "lava_slime";
+                    else if (Math.random() < 0.35 || game.timeSystem.phase === "noite") type = "demon_eye";
+                    if (type === "demon_eye" && block.type === 0) {
+                        enemies.push({ type: "demon_eye", x: rx * TILE_SIZE + TILE_SIZE / 2, y: ry * TILE_SIZE + TILE_SIZE / 2, vx: 0, vy: 0, radius: 11, speed: 1.4, hp: 5 + Math.floor(ry/15), maxHp: 5 + Math.floor(ry/15), damage: 8 + Math.floor(ry/25), color: "#9c27b0" });
+                    } 
+                    else if ((type === "zombie" || type === "lava_slime") && block.type === 0 && blockBelow.type !== 0) {
+                        if (type === "zombie") {
+                            enemies.push({ type: "zombie", x: rx * TILE_SIZE + TILE_SIZE / 2, y: ry * TILE_SIZE + TILE_SIZE - 16, vx: 0, vy: 0, radius: 15, speed: 1.0, jumpTimer: 0, hp: 20 + Math.floor(ry/5), maxHp: 20 + Math.floor(ry/5), damage: 14 + Math.floor(ry/10), color: "#4caf50" });
+                        } else {
+                            enemies.push({ type: "lava_slime", x: rx * TILE_SIZE + TILE_SIZE / 2, y: ry * TILE_SIZE + TILE_SIZE - 12, vx: 0, vy: 0, radius: 13, speed: 1.5, hp: 30 + Math.floor(ry/4), maxHp: 30 + Math.floor(ry/4), damage: 22 + Math.floor(ry/8), color: "#f44336" });
+                        }
+                    }
+                }
+            }
+            for (let i = enemies.length - 1; i >= 0; i--) { if (Math.hypot(game.player.x - enemies[i].x, game.player.y - enemies[i].y) > 1300) enemies.splice(i, 1); }
+        }
+
+        function createPhysicalParticles(x, y, color, count = 6) {
+            for (let i = 0; i < count; i++) {
+                let angle = Math.random() * Math.PI * 2; let speed = 2 + Math.random() * 4;
+                particles.push({ x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2, radius: 2.5 + Math.random() * 3, color: color, alpha: 1, decay: 0.01 + Math.random() * 0.015, bounceCount: 0 });
+            }
+        }
+
+        let keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') {
+                if (game.player.grounded && !game.menuOpen && !game.isDead) { game.player.vy = JUMP_FORCE; game.player.grounded = false; }
+            }
+            if (e.key.toLowerCase() === 'e' && !game.isDead) {
+                game.menuOpen = !game.menuOpen; document.getElementById('upgradeMenu').style.display = game.menuOpen ? 'flex' : 'none'; updateMenuUI();
+            }
+        });
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+        let mouse = { x: 0, y: 0, isDown: false, worldX: 0, worldY: 0 };
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mousedown', e => { 
+            if(!game.menuOpen && !game.isDead) {
+                if (e.button === 0) mouse.isDown = true; if (e.button === 2) executeBuildBlock();
+            }
+        });
+        window.addEventListener('mouseup', e => { if (e.button === 0) mouse.isDown = false; });
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        document.getElementById('tpBtn').addEventListener('click', () => {
+            if (game.isDead) return;
+            if (game.money >= 5) {
+                game.money -= 5; game.player.x = 100; game.player.y = -150; game.player.vx = 0; game.player.vy = 0; enemies = []; createPhysicalParticles(100, -150, "#3949ab", 25);
+            }
+        });
+
+        function checkTileCollision(px, py, radius) {
+            let left = Math.floor((px - radius) / TILE_SIZE); let right = Math.floor((px + radius) / TILE_SIZE);
+            let top = Math.floor((py - radius) / TILE_SIZE); let bottom = Math.floor((py + radius) / TILE_SIZE);
+            let colliders = [];
+            for (let y = top; y <= bottom; y++) {
+                for (let x = left; x <= right; x++) { if (getBlockAt(x, y).type !== 0) colliders.push({ x: x * TILE_SIZE, y: y * TILE_SIZE }); }
+            }
+            return colliders;
+        }
+
+        function handlePlayerDeath() {
+            game.isDead = true; mouse.isDown = false; game.money = Math.floor(game.money * 0.75);
+            Object.keys(game.inventory).forEach(k => game.inventory[k] = 0);
+            document.getElementById('deathScreen').style.display = 'flex';
+            if(game.menuOpen) { game.menuOpen = false; document.getElementById('upgradeMenu').style.display = 'none'; }
+        }
+
+        document.getElementById('respawnBtn').addEventListener('click', () => {
+            game.player.hp = 100; game.player.x = 100; game.player.y = -150; game.player.vx = 0; game.player.vy = 0; enemies = []; game.isDead = false; document.getElementById('deathScreen').style.display = 'none';
+        });
+
+        // --- ENVIAR COORDENADAS PRO SERVIDOR PYTHON ---
+        function sendPlayerDataToServer() {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(jsonPackage("move", {
+                    x: game.player.x, y: game.player.y, angle: game.player.angle,
+                    isMining: game.player.isMining, miningSwing: game.player.miningSwing, hp: game.player.hp
+                }));
+            }
+        }
+
+        function jsonPackage(type, extra) { return JSON.stringify(Object.assign({type: type}, extra)); }
+
+        function update() {
+            if (game.isDead) { draw(); requestAnimationFrame(update); return; }
+
+            if (Date.now() - lastRegenTime >= 1000) {
+                if (game.player.hp < game.player.maxHp) game.player.hp = Math.min(game.player.maxHp, game.player.hp + 1);
+                lastRegenTime = Date.now();
+            }
+
+            game.timeSystem.timer--;
+            if (game.timeSystem.timer <= 0) {
+                game.timeSystem.timer = game.timeSystem.maxDuration; game.timeSystem.phase = game.timeSystem.phase === "dia" ? "noite" : "dia";
+                let isNoite = game.timeSystem.phase === "noite";
+                document.getElementById('timePhase').textContent = isNoite ? "🌙 NOITE" : "☀️ DIA";
+                document.getElementById('timePhase').style.color = isNoite ? "#ff3333" : "#ffb300";
+            }
+            document.getElementById('timeClock').textContent = Math.ceil(game.timeSystem.timer / 60);
+
+            let moveX = 0;
+            if (keys['a'] || keys['arrowleft']) moveX = -1; if (keys['d'] || keys['arrowright']) moveX = 1;
+
+            if (moveX !== 0 && !game.menuOpen) {
+                let currentSpeed = game.player.speed * (1 + (game.upgrades.speed.lvl - 1) * 0.12);
+                game.player.vx += moveX * currentSpeed * 0.2;
+            }
+            game.player.vx *= game.player.friction;
+            game.player.vy += GRAVITY;
+            if (game.player.vy > MAX_FALL_SPEED) game.player.vy = MAX_FALL_SPEED;
+
+            let preFallSpeed = game.player.vy;
+            game.player.x += game.player.vx;
+            if (checkTileCollision(game.player.x, game.player.y, game.player.radius).length > 0) { game.player.x -= game.player.vx; game.player.vx = 0; }
+
+            game.player.y += game.player.vy; game.player.grounded = false;
+            if (checkTileCollision(game.player.x, game.player.y, game.player.radius).length > 0) {
+                if (game.player.vy > 0) { 
+                    game.player.grounded = true;
+                    if (preFallSpeed > 9) {
+                        let fallDamage = Math.floor((preFallSpeed - 9) * 14);
+                        if (fallDamage > 0) { game.player.hp -= fallDamage; createPhysicalParticles(game.player.x, game.player.y + 10, "#ff1111", 15); if (game.player.hp <= 0) { handlePlayerDeath(); return; } }
+                    }
+                }
+                game.player.y -= game.player.vy; game.player.vy = 0;
+            }
+
+            if (game.player.invulnFrames > 0) game.player.invulnFrames--;
+
+            let camX = canvas.width / 2 - game.player.x; let camY = canvas.height / 2 - game.player.y;
+            mouse.worldX = mouse.x - camX; mouse.worldY = mouse.y - camY;
+            game.player.angle = Math.atan2(mouse.worldY - game.player.y, mouse.worldX - game.player.x);
+
+            if (mouse.isDown && !game.menuOpen) {
+                game.player.isMining = true; game.player.miningSwing += 0.22;
+                if (game.player.miningSwing >= Math.PI * 2) { game.player.miningSwing = 0; executeMineStrike(); }
+            } else { game.player.isMining = false; game.player.miningSwing = 0; }
+
+            sendPlayerDataToServer(); // Envia movimentos pro servidor Python
+            manageDynamicEnemies();
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i]; p.vy += 0.22; p.x += p.vx;
+                if(checkTileCollision(p.x, p.y, p.radius).length > 0) { p.x -= p.vx; p.vx = -p.vx * 0.5; }
+                p.y += p.vy;
+                if(checkTileCollision(p.x, p.y, p.radius).length > 0) { p.y -= p.vy; p.vy = -p.vy * 0.4; p.vx *= 0.7; p.bounceCount++; }
+                p.alpha -= p.decay; if (p.alpha <= 0 || p.bounceCount > 4) particles.splice(i, 1);
+            }
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i]; let distToPlayer = Math.hypot(game.player.x - e.x, game.player.y - e.y);
+                if (e.type === "demon_eye") {
+                    let dx = game.player.x - e.x; let dy = game.player.y - e.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist > 0) { e.vx += (dx / dist) * 0.15; e.vy += (dy / dist) * 0.15; }
+                    e.vx *= 0.96; e.vy *= 0.96; e.x += e.vx * e.speed;
+                    if(checkTileCollision(e.x, e.y, e.radius).length > 0) { e.x -= e.vx * e.speed; e.vx = -e.vx * 0.6; }
+                    e.y += e.vy * e.speed;
+                    if(checkTileCollision(e.x, e.y, e.radius).length > 0) { e.y -= e.vy * e.speed; e.vy = -e.vy * 0.6; }
+                } 
+                else if (e.type === "zombie") {
+                    e.vy += GRAVITY; e.y += e.vy; if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.y -= e.vy; e.vy = 0; }
+                    if (distToPlayer < 500) {
+                        let dirX = game.player.x > e.x ? 1 : -1; e.x += dirX * e.speed;
+                        if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.x -= dirX * e.speed; if (checkTileCollision(e.x, e.y + 2, e.radius).length > 0) e.vy = -5.8; }
+                    }
+                } 
+                else if (e.type === "lava_slime") {
+                    e.vy += GRAVITY; e.y += e.vy; let slimeGrounded = false; if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.y -= e.vy; e.vy = 0; slimeGrounded = true; }
+                    if (distToPlayer < 500) { let dirX = game.player.x > e.x ? 1 : -1; if (slimeGrounded) { e.vx = dirX * e.speed; e.vy = -4.5 - Math.random() * 3; } }
+                    e.x += e.vx; e.vx *= 0.92; if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.x -= e.vx; e.vx = 0; }
+                }
+                if (distToPlayer < e.radius + game.player.radius && game.player.invulnFrames === 0) {
+                    game.player.hp -= e.damage; game.player.invulnFrames = 25; createPhysicalParticles(game.player.x, game.player.y, "#ff1111", 12); if (game.player.hp <= 0) { handlePlayerDeath(); break; }
+                }
+            }
+
+            draw(); updateHUD(); requestAnimationFrame(update);
+        }
+
+        function executeMineStrike() {
+            let maxRange = (TILE_SIZE * 1.6) * (1 + (game.upgrades.range.lvl - 1) * 0.2);
+            let dist = Math.hypot(mouse.worldX - game.player.x, mouse.worldY - game.player.y);
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                if (Math.hypot(e.x - mouse.worldX, e.y - mouse.worldY) < e.radius + 25 && dist <= maxRange) {
+                    e.hp -= game.upgrades.damage.lvl * 4; createPhysicalParticles(e.x, e.y, e.color, 8);
+                    if (e.hp <= 0) { createPhysicalParticles(e.x, e.y, e.color, 18); game.money += 25; enemies.splice(i, 1); }
+                    return;
+                }
+            }
+
+            let currentWeight = Object.values(game.inventory).reduce((a, b) => a + b, 0);
+            if (currentWeight >= game.upgrades.cargo.maxWeight + (game.upgrades.cargo.lvl - 1) * 10) return;
+
+            if (dist <= maxRange) {
+                let tileX = Math.floor(mouse.worldX / TILE_SIZE); let tileY = Math.floor(mouse.worldY / TILE_SIZE);
+                let targetBlock = getBlockAt(tileX, tileY);
+                if (targetBlock.type !== 0) {
+                    targetBlock.hp -= game.upgrades.damage.lvl; createPhysicalParticles(mouse.worldX, mouse.worldY, oreTypes[targetBlock.type].color, 5);
+
+                    let key = `${tileX},${tileY}`;
+                    if (targetBlock.hp <= 0) {
+                        if (targetBlock.type === 1 || targetBlock.type === 10) game.inventory.stone++; else game.inventory[oreTypes[targetBlock.type].id]++;
+                        let freshAir = { type: 0, hp: 0, maxHp: 0 };
+                        brokenBlocks[key] = freshAir;
+                        if(socket.readyState === WebSocket.OPEN) socket.send(jsonPackage("block_update", {key: key, blockData: freshAir}));
+                    } else {
+                        brokenBlocks[key] = targetBlock;
+                        if(socket.readyState === WebSocket.OPEN) socket.send(jsonPackage("block_update", {key: key, blockData: targetBlock}));
+                    }
+                }
+            }
+        }
+
+        function executeBuildBlock() {
+            let maxRange = (TILE_SIZE * 1.6) * (1 + (game.upgrades.range.lvl - 1) * 0.2);
+            let dist = Math.hypot(mouse.worldX - game.player.x, mouse.worldY - game.player.y);
+            if (dist <= maxRange && game.inventory.stone > 0) {
+                let tileX = Math.floor(mouse.worldX / TILE_SIZE); let tileY = Math.floor(mouse.worldY / TILE_SIZE);
+                let targetBlock = getBlockAt(tileX, tileY);
+                if (targetBlock.type === 0) {
+                    let blockLeft = tileX * TILE_SIZE; let blockRight = blockLeft + TILE_SIZE;
+                    let blockTop = tileY * TILE_SIZE; let blockBottom = blockTop + TILE_SIZE;
+                    let pLeft = game.player.x - game.player.radius; let pRight = game.player.x + game.player.radius;
+                    let pTop = game.player.y - game.player.radius; let pBottom = game.player.y + game.player.radius;
+                    if (!(pRight > blockLeft && pLeft < blockRight && pBottom > blockTop && pTop < blockBottom)) {
+                        let newStone = { type: 1, hp: 3, maxHp: 3 };
+                        let key = `${tileX},${tileY}`;
+                        brokenBlocks[key] = newStone; game.inventory.stone--; createPhysicalParticles(mouse.worldX, mouse.worldY, oreTypes[1].color, 4);
+                        if(socket.readyState === WebSocket.OPEN) socket.send(jsonPackage("block_update", {key: key, blockData: newStone}));
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            let depthFactor = Math.min(1, Math.max(0, game.player.y / 350));
+            if (depthFactor < 0.1) ctx.fillStyle = game.timeSystem.phase === "dia" ? "#4fc3f7" : "#0a1128";
+            else { let r = Math.floor(8 * depthFactor); let g = Math.floor(4 * depthFactor); let b = Math.floor(3 * depthFactor); ctx.fillStyle = `rgb(${r}, ${g}, ${b})`; }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let camX = Math.floor(canvas.width / 2 - game.player.x); let camY = Math.floor(canvas.height / 2 - game.player.y);
+            ctx.save(); ctx.translate(camX, camY);
+
+            let startY = Math.floor((-camY) / TILE_SIZE) - 1; let endY = Math.ceil((canvas.height - camY) / TILE_SIZE) + 1;
+            let startX = Math.floor((-camX) / TILE_SIZE) - 1; let endX = Math.ceil((canvas.width - camX) / TILE_SIZE) + 1;
+
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    let block = getBlockAt(x, y);
+                    if (block.type !== 0) {
+                        let config = oreTypes[block.type];
+                        ctx.fillStyle = block.type === 1 ? (y > 150 ? "#1c0d0b" : (y > 60 ? "#3d2420" : "#5d4037")) : config.color;
+                        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeStyle = config.border; ctx.lineWidth = 3; ctx.strokeRect(x * TILE_SIZE + 1.5, y * TILE_SIZE + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
+                        if (block.type > 1 && block.type !== 10) { ctx.fillStyle = "#ffffff"; ctx.fillRect(x * TILE_SIZE + 14, y * TILE_SIZE + 12, 5, 5); ctx.fillRect(x * TILE_SIZE + 32, y * TILE_SIZE + 28, 6, 6); }
+                    }
+                }
+            }
+
+            // --- RENDERIZAR OUTROS JOGADORES CONECTADOS ---
+            for (let id in otherPlayers) {
+                let p = otherPlayers[id];
+                ctx.save(); ctx.translate(p.x, p.y);
+                // Jogadores da rede aparecem em azul escuro/ciano para diferenciar de você
+                ctx.fillStyle = "#0288d1"; ctx.beginPath(); ctx.arc(0, 0, game.player.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = "#002f6c"; ctx.lineWidth = 3; ctx.stroke();
+                
+                // Olhos do outro jogador
+                ctx.save(); ctx.rotate(p.angle);
+                ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.arc(7, 5, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.arc(9, -5, 1.8, 0, Math.PI * 2); ctx.arc(9, 5, 1.8, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+
+                // Picareta do outro jogador animada
+                ctx.save(); ctx.rotate(p.angle);
+                if (p.isMining) ctx.rotate(Math.sin(p.miningSwing * 2) * 0.7);
+                ctx.fillStyle = "#5d4037"; ctx.fillRect(8, -2, 22, 5);
+                ctx.fillStyle = "#b0bec5"; ctx.beginPath(); ctx.moveTo(26, -14); ctx.lineTo(32, 0); ctx.lineTo(26, 14); ctx.lineTo(23, 0); ctx.closePath(); ctx.fill();
+                ctx.restore();
+                ctx.restore();
+            }
+
+            for (let e of enemies) {
+                ctx.fillStyle = e.color; ctx.save(); ctx.translate(e.x, e.y);
+                if (e.type === "demon_eye") { ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#ff3333"; ctx.beginPath(); ctx.arc(4, 0, e.radius/2, 0, Math.PI * 2); ctx.fill(); }
+                else if (e.type === "lava_slime") { ctx.beginPath(); ctx.ellipse(0, 2, e.radius * 1.2, e.radius, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#ffeb3b"; ctx.fillRect(-4, -2, 2, 2); ctx.fillRect(2, -2, 2, 2); }
+                else { ctx.fillRect(-e.radius, -e.radius, e.radius * 2, e.radius * 2); ctx.strokeStyle = "#1b5e20"; ctx.lineWidth = 2; ctx.strokeRect(-e.radius, -e.radius, e.radius * 2, e.radius * 2); }
+                ctx.restore();
+            }
+
+            for (let p of particles) { ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+
+            if (!game.isDead) {
+                ctx.save(); ctx.translate(game.player.x, game.player.y);
+                if (game.player.invulnFrames % 4 < 2) {
+                    ctx.fillStyle = "#e64a19"; ctx.beginPath(); ctx.arc(0, 0, game.player.radius, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = "#2d1a15"; ctx.lineWidth = 3; ctx.stroke();
+                    ctx.save(); ctx.rotate(game.player.angle);
+                    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.arc(7, 5, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.arc(9, -5, 1.8, 0, Math.PI * 2); ctx.arc(9, 5, 1.8, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+                    ctx.save(); ctx.rotate(game.player.angle);
+                    if (game.player.isMining) { ctx.rotate(Math.sin(game.player.miningSwing * 2) * 0.7); }
+                    ctx.fillStyle = "#5d4037"; ctx.fillRect(8, -2, 22, 5);
+                    ctx.fillStyle = "#b0bec5"; ctx.beginPath(); ctx.moveTo(26, -14); ctx.lineTo(32, 0); ctx.lineTo(26, 14); ctx.lineTo(23, 0); ctx.closePath(); ctx.fill();
+                    ctx.restore();
+                }
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function updateHUD() {
+            let currentWeight = Object.values(game.inventory).reduce((a, b) => a + b, 0);
+            document.getElementById('hudHp').textContent = Math.max(0, game.player.hp);
+            document.getElementById('hudDepth').textContent = Math.max(0, Math.floor(game.player.y / TILE_SIZE));
+            document.getElementById('hudMoney').textContent = `$${game.money}`;
+            document.getElementById('hudWeight').textContent = currentWeight;
+            document.getElementById('hudMaxWeight').textContent = game.upgrades.cargo.maxWeight + (game.upgrades.cargo.lvl - 1) * 10;
+        }
+
+        function updateMenuUI() {
+            let invDiv = document.getElementById('invDisplay');
+            invDiv.innerHTML = `
+                <div class="inventory-item"><span>🪨 Pedra:</span> <b>${game.inventory.stone}</b></div>
+                <div class="inventory-item"><span>🔸 Cobre:</span> <b>${game.inventory.copper}</b></div>
+                <div class="inventory-item"><span>🪙 Ferro:</span> <b>${game.inventory.iron}</b></div>
+                <div class="inventory-item"><span>💛 Ouro:</span> <b>${game.inventory.gold}</b></div>
+                <div class="inventory-item"><span>💎 Diamante:</span> <b>${game.inventory.diamond}</b></div>
+            `;
+            const syncBtn = (btnId, labelId, upgradeData, title, desc) => {
+                let btn = document.getElementById(btnId); document.getElementById(labelId).innerHTML = `<p>${title} (Lvl ${upgradeData.lvl})</p><span>${desc}</span>`;
+                btn.textContent = `$${upgradeData.cost}`; btn.disabled = game.money < upgradeData.cost;
+            };
+            syncBtn('btn-up1', 'lbl-up1', game.upgrades.damage, "Têmpera", `Dano: +${game.upgrades.damage.lvl}`);
+            syncBtn('btn-up2', 'lbl-up2', game.upgrades.speed, "Botas", `Velocidade +12%`);
+            syncBtn('btn-up3', 'lbl-up3', game.upgrades.range, "Cabo", `Alcance +20%`);
+            syncBtn('btn-up4', 'lbl-up4', game.upgrades.cargo, "Mochila", `${game.upgrades.cargo.maxWeight + (game.upgrades.cargo.lvl - 1) * 10}kg`);
+            document.getElementById('btn-food-cookie').disabled = game.money < 3; document.getElementById('btn-food-bread').disabled = game.money < 12; document.getElementById('btn-food-chicken').disabled = game.money < 20;
+        }
+
+        function bindFoodItem(btnId, cost, healAmount) {
+            document.getElementById(btnId).addEventListener('click', () => {
+                if (game.money >= cost) { game.money -= cost; game.player.hp = Math.min(game.player.maxHp, game.player.hp + healAmount); createPhysicalParticles(game.player.x, game.player.y, "#ffeb3b", 12); updateMenuUI(); updateHUD(); }
+            });
+        }
+        bindFoodItem('btn-food-cookie', 3, 10); bindFoodItem('btn-food-bread', 12, 50); bindFoodItem('btn-food-chicken', 20, 100);
+
+        document.getElementById('sellAllBtn').addEventListener('click', () => {
+            let totalGain = 0;
+            Object.keys(game.inventory).forEach(key => { let oreConfig = Object.values(oreTypes).find(o => o.id === key); if (oreConfig) { totalGain += game.inventory[key] * oreConfig.val; game.inventory[key] = 0; } });
+            game.money += totalGain; updateMenuUI();
+        });
+
+        function bindUpgrade(btnId, upgradeKey, costScale) {
+            document.getElementById(btnId).addEventListener('click', () => {
+                let up = game.upgrades[upgradeKey]; if (game.money >= up.cost) { game.money -= up.cost; up.lvl++; up.cost = Math.round(up.cost * costScale); updateMenuUI(); }
+            });
+        }
+        bindUpgrade('btn-up1', 'damage', 1.45); bindUpgrade('btn-up2', 'speed', 1.4); bindUpgrade('btn-up3', 'range', 1.5); bindUpgrade('btn-up4', 'cargo', 1.35);
+
+        requestAnimationFrame(update);
+    </script>
+</body>
+</html>
