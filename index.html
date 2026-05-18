@@ -8,13 +8,32 @@
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { background: #0c0605; color: #d7ccc8; font-family: 'Courier New', Courier, monospace; overflow: hidden; height: 100vh; }
         #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        
+        /* Menu de Login/Customização */
+        #loginScreen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #120705; z-index: 500; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; border: 4px solid #3e2723; }
+        #loginScreen h1 { color: #ffb300; font-size: 2.5rem; letter-spacing: 4px; text-shadow: 2px 2px #000; }
+        .login-box { background: rgba(23, 13, 10, 0.95); padding: 30px; border: 2px solid #5d4037; border-radius: 8px; width: 360px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .login-box label { font-size: 0.9rem; color: #bcaaa4; }
+        .login-box input[type="text"] { background: #1c0d0a; border: 2px solid #5d4037; padding: 10px; color: #fff; font-family: monospace; font-size: 1rem; border-radius: 4px; outline: none; }
+        .login-box input[type="color"] { background: none; border: none; width: 100%; height: 40px; cursor: pointer; }
+        #playBtn { background: linear-gradient(to bottom, #ffca28 0%, #b57c00 100%); color: #120a07; font-family: monospace; font-weight: bold; border: none; padding: 12px; font-size: 1.1rem; border-radius: 4px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px #5e3e00; }
+        #playBtn:active { transform: translateY(2px); box-shadow: 0 2px #5e3e00; }
+
+        /* HUD Principal */
         .hud-top { position: absolute; top: 20px; left: 20px; background: rgba(23, 13, 10, 0.95); padding: 18px; border: 2px solid #5d4037; border-radius: 6px; pointer-events: none; box-shadow: 0 10px 25px rgba(0,0,0,0.7); z-index: 10; }
         .hud-top h1 { font-size: 1.4rem; color: #ffb300; margin-bottom: 8px; letter-spacing: 2px; text-shadow: 1px 1px 3px #000; }
         .hud-top p { font-size: 0.95rem; margin: 4px 0; color: #bcaaa4; }
         .hud-time { position: absolute; top: 20px; right: 20px; background: rgba(10, 15, 28, 0.95); padding: 15px; border: 2px solid #3949ab; border-radius: 6px; text-align: right; box-shadow: 0 10px 25px rgba(0,0,0,0.7); z-index: 10; }
         #tpBtn { position: absolute; bottom: 25px; right: 25px; background: linear-gradient(to bottom, #3949ab 0%, #1a237e 100%); color: #fff; border: 2px solid #1a237e; padding: 12px 24px; font-family: monospace; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #0d1242; border-radius: 4px; z-index: 15; text-transform: uppercase; }
         #tpBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #0d1242; }
-        .menu-tip { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: rgba(17, 9, 7, 0.9); padding: 10px 22px; border: 2px dashed #ffb300; border-radius: 4px; font-size: 1rem; color: #fff; pointer-events: none; z-index: 5; text-align: center; }
+        .menu-tip { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: rgba(17, 9, 7, 0.9); padding: 10px 22px; border: 2px dashed #ffb300; border-radius: 4px; font-size: 0.9rem; color: #fff; pointer-events: none; z-index: 5; text-align: center; }
+        
+        /* Chat Box */
+        #chatContainer { position: absolute; bottom: 25px; left: 25px; width: 340px; background: rgba(17, 9, 7, 0.85); border: 2px solid #5d4037; border-radius: 4px; display: flex; flex-direction: column; z-index: 150; box-shadow: 0 8px 20px rgba(0,0,0,0.8); }
+        #chatBox { height: 160px; overflow-y: auto; padding: 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; color: #e0d4d0; }
+        #chatInput { background: #0f0705; border: none; border-top: 2px solid #5d4037; padding: 10px; color: white; font-family: monospace; font-size: 0.9rem; outline: none; }
+
+        /* Telas de UI */
         #deathScreen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(13, 2, 2, 0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(4px); }
         #deathScreen h2 { color: #ff3333; font-size: 2.5rem; margin-bottom: 10px; }
         #respawnBtn { background: linear-gradient(to bottom, #ff3333 0%, #990000 100%); color: white; border: 2px solid #500; padding: 14px 28px; font-family: monospace; font-weight: bold; cursor: pointer; border-radius: 4px; }
@@ -30,11 +49,23 @@
         .item-info p { font-size: 0.9rem; font-weight: bold; color: #ffe0b2; }
         .item-info span { font-size: 0.75rem; color: #a1887f; }
         .buy-btn { background: linear-gradient(to bottom, #5d4037 0%, #3e2723 100%); color: #ffb300; border: 1px solid #2d1a15; padding: 6px 12px; font-family: monospace; font-weight: bold; cursor: pointer; min-width: 75px; }
-        .buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         #netStatus { font-weight: bold; }
     </style>
 </head>
 <body>
+
+    <div id="loginScreen">
+        <h1>UNDERLODE.IO</h1>
+        <div class="login-box">
+            <label>Seu Apelido (Nick):</label>
+            <input type="text" id="nicknameInput" value="Minerador" maxlength="14">
+            
+            <label>Cor da sua Bolinha:</label>
+            <input type="color" id="playerColorInput" value="#e74c3c">
+            
+            <button id="playBtn">Entrar no Jogo</button>
+        </div>
+    </div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -50,6 +81,11 @@
     <div class="hud-time">
         <div id="timePhase" style="color: #ffb300;">☀️ DIA</div>
         <p style="color: #8c9eff; font-size: 0.85rem; margin-top: 4px;">Próxima Fase: <span id="timeClock">30</span>s</p>
+    </div>
+
+    <div id="chatContainer">
+        <div id="chatBox"></div>
+        <input type="text" id="chatInput" placeholder="Pressione [Enter] para conversar..." maxlength = "70">
     </div>
 
     <div class="menu-tip">Pressione [ E ] para Mercado & Upgrades<br><span style="color:#ffb300; font-size:0.85rem;">Clique Esquerdo: Minar | Clique Direito: Construir Bloco de Pedra</span></div>
@@ -123,41 +159,15 @@
         
         let brokenBlocks = {}; 
         let lastRegenTime = Date.now();
-        let otherPlayers = {}; // Guarda as posições dos outros players online
-
-        // --- SISTEMA MULTIPLAYER (WEBSOCKET CLIENT) ---
-        // Se for jogar com amigos em outra rede, mude 'localhost' para o IP do seu computador na rede
-        const socket = new WebSocket('wss://underlode-server.onrender.com');
-
-        socket.onopen = () => {
-            const status = document.getElementById('netStatus');
-            status.textContent = "Conectado"; status.style.color = "#2ecc71";
-        };
-
-        socket.onmessage = (event) => {
-            let data = JSON.parse(event.data);
-            
-            if (data.type === "init") {
-                // Carrega o mapa com as alterações que já existiam no servidor
-                brokenBlocks = data.world;
-            }
-            else if (data.type === "state") {
-                // Atualiza a posição dos outros e o mapa global
-                otherPlayers = data.players;
-                Object.assign(brokenBlocks, data.world);
-            }
-            else if (data.type === "disconnect") {
-                // Remove o fantasma do jogador desconectado
-                delete otherPlayers[data.id];
-            }
-        };
-
-        socket.onerror = () => {
-            const status = document.getElementById('netStatus');
-            status.textContent = "Erro"; status.style.color = "#ff3333";
-        };
+        
+        let otherPlayers = {}; 
+        let serverEnemies = [];
+        let myIdInServer = null;
+        let hasJoined = false;
 
         let game = {
+            playerName: "Minerador",
+            playerColor: "#e74c3c",
             money: 15, menuOpen: false, isDead: false,
             timeSystem: { phase: "dia", timer: 30 * 60, maxDuration: 30 * 60 },
             player: {
@@ -170,6 +180,100 @@
             },
             inventory: { stone: 5, copper: 0, iron: 0, gold: 0, emerald: 0, sapphire: 0, ruby: 0, diamond: 0, uranium: 0 }
         };
+
+        // --- ENGENHO DE REDE MULTIPLAYER ---
+        const socket = new WebSocket('wss://underlode-server.onrender.com');
+
+        socket.onopen = () => {
+            const status = document.getElementById('netStatus');
+            status.textContent = "Conectado"; status.style.color = "#2ecc71";
+        };
+
+        socket.onmessage = (event) => {
+            let data = JSON.parse(event.data);
+            
+            if (data.type === "init") {
+                brokenBlocks = data.world;
+            }
+            else if (data.type === "cheat_rejected") {
+                // Captura e exibe o bloqueio de Anti-Cheat vindo do Python
+                alert(data.reason);
+                document.getElementById('loginScreen').style.display = 'flex';
+                hasJoined = false;
+            }
+            else if (data.type === "state") {
+                let incomingPlayers = data.players;
+                if (socket.readyState === WebSocket.OPEN && hasJoined) {
+                    if (!myIdInServer) {
+                        let keys = Object.keys(incomingPlayers);
+                        for (let k of keys) {
+                            if (incomingPlayers[k].name === game.playerName) myIdInServer = k;
+                        }
+                    }
+                    if (myIdInServer) delete incomingPlayers[myIdInServer]; 
+                }
+                otherPlayers = incomingPlayers;
+                Object.assign(brokenBlocks, data.world);
+                serverEnemies = data.enemies || [];
+            }
+            else if (data.type === "disconnect") {
+                delete otherPlayers[data.id];
+            }
+            else if (data.type === "chat_broadcast") {
+                appendChatMessage(data.sender, data.text);
+            }
+        };
+
+        socket.onerror = () => {
+            const status = document.getElementById('netStatus');
+            status.textContent = "Erro"; status.style.color = "#ff3333";
+        };
+
+        // --- ENTRADA NO JOGO ---
+        document.getElementById('playBtn').addEventListener('click', () => {
+            let selectedNick = document.getElementById('nicknameInput').value.trim();
+            if(selectedNick === "") selectedNick = "Minerador";
+            
+            game.playerName = selectedNick;
+            game.playerColor = document.getElementById('playerColorInput').value;
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            hasJoined = true;
+
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "join",
+                    name: game.playerName,
+                    color: game.playerColor
+                }));
+            }
+        });
+
+        // --- CHAT GLOBAL ---
+        const chatInput = document.getElementById('chatInput');
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                let msgText = chatInput.value.trim();
+                if (msgText !== "" && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
+                        type: "chat",
+                        sender: game.playerName,
+                        text: msgText
+                    }));
+                    chatInput.value = "";
+                    chatInput.blur();
+                }
+            }
+            e.stopPropagation(); 
+        });
+
+        function appendChatMessage(sender, text) {
+            const chatBox = document.getElementById('chatBox');
+            const msgEl = document.createElement('div');
+            msgEl.innerHTML = `<span style="color:#ffb300; font-weight:bold;">[${sender}]:</span> <span style="color:#fff;">${text}</span>`;
+            chatBox.appendChild(msgEl);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
         const oreTypes = {
             0: { id: 'air', color: "#0c0605", solid: false },
@@ -185,7 +289,7 @@
             10:{ id: 'grass', color: "#2ecc71", border: "#27ae60", val: 0, hp: 2, solid: true }
         };
 
-        let particles = []; let enemies = [];
+        let particles = [];
 
         function getBlockAt(x, y) {
             let key = `${x},${y}`;
@@ -204,30 +308,6 @@
             return { type: blockType, hp: baseHp + Math.floor(y / 15), maxHp: baseHp + Math.floor(y / 15) };
         }
 
-        function manageDynamicEnemies() {
-            if (enemies.length < 15 && Math.random() < 0.02) {
-                let pTileX = Math.floor(game.player.x / TILE_SIZE); let pTileY = Math.floor(game.player.y / TILE_SIZE);
-                let rx = pTileX + (Math.floor(Math.random() * 24) - 12); let ry = pTileY + (Math.floor(Math.random() * 16) - 8);
-                if (Math.hypot(pTileX - rx, pTileY - ry) > 6) {
-                    let block = getBlockAt(rx, ry); let blockBelow = getBlockAt(rx, ry + 1);
-                    let type = "zombie";
-                    if (ry > 80 && Math.random() < 0.4) type = "lava_slime";
-                    else if (Math.random() < 0.35 || game.timeSystem.phase === "noite") type = "demon_eye";
-                    if (type === "demon_eye" && block.type === 0) {
-                        enemies.push({ type: "demon_eye", x: rx * TILE_SIZE + TILE_SIZE / 2, y: ry * TILE_SIZE + TILE_SIZE / 2, vx: 0, vy: 0, radius: 11, speed: 1.4, hp: 5 + Math.floor(ry/15), maxHp: 5 + Math.floor(ry/15), damage: 8 + Math.floor(ry/25), color: "#9c27b0" });
-                    } 
-                    else if ((type === "zombie" || type === "lava_slime") && block.type === 0 && blockBelow.type !== 0) {
-                        if (type === "zombie") {
-                            enemies.push({ type: "zombie", x: rx * TILE_SIZE + TILE_SIZE / 2, y: ry * TILE_SIZE + TILE_SIZE - 16, vx: 0, vy: 0, radius: 15, speed: 1.0, jumpTimer: 0, hp: 20 + Math.floor(ry/5), maxHp: 20 + Math.floor(ry/5), damage: 14 + Math.floor(ry/10), color: "#4caf50" });
-                        } else {
-                            enemies.push({ type: "lava_slime", x: rx * TILE_SIZE + TILE_SIZE / 2, y: ry * TILE_SIZE + TILE_SIZE - 12, vx: 0, vy: 0, radius: 13, speed: 1.5, hp: 30 + Math.floor(ry/4), maxHp: 30 + Math.floor(ry/4), damage: 22 + Math.floor(ry/8), color: "#f44336" });
-                        }
-                    }
-                }
-            }
-            for (let i = enemies.length - 1; i >= 0; i--) { if (Math.hypot(game.player.x - enemies[i].x, game.player.y - enemies[i].y) > 1300) enemies.splice(i, 1); }
-        }
-
         function createPhysicalParticles(x, y, color, count = 6) {
             for (let i = 0; i < count; i++) {
                 let angle = Math.random() * Math.PI * 2; let speed = 2 + Math.random() * 4;
@@ -237,6 +317,7 @@
 
         let keys = {};
         window.addEventListener('keydown', e => {
+            if (document.activeElement === chatInput) return;
             keys[e.key.toLowerCase()] = true;
             if (e.key === ' ' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') {
                 if (game.player.grounded && !game.menuOpen && !game.isDead) { game.player.vy = JUMP_FORCE; game.player.grounded = false; }
@@ -250,7 +331,8 @@
         let mouse = { x: 0, y: 0, isDown: false, worldX: 0, worldY: 0 };
         window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
         window.addEventListener('mousedown', e => { 
-            if(!game.menuOpen && !game.isDead) {
+            if(document.activeElement === chatInput) return;
+            if(!game.menuOpen && !game.isDead && hasJoined) {
                 if (e.button === 0) mouse.isDown = true; if (e.button === 2) executeBuildBlock();
             }
         });
@@ -258,9 +340,9 @@
         window.addEventListener('contextmenu', e => e.preventDefault());
 
         document.getElementById('tpBtn').addEventListener('click', () => {
-            if (game.isDead) return;
+            if (game.isDead || !hasJoined) return;
             if (game.money >= 5) {
-                game.money -= 5; game.player.x = 100; game.player.y = -150; game.player.vx = 0; game.player.vy = 0; enemies = []; createPhysicalParticles(100, -150, "#3949ab", 25);
+                game.money -= 5; game.player.x = 100; game.player.y = -150; game.player.vx = 0; game.player.vy = 0; createPhysicalParticles(100, -150, "#3949ab", 25);
             }
         });
 
@@ -282,22 +364,21 @@
         }
 
         document.getElementById('respawnBtn').addEventListener('click', () => {
-            game.player.hp = 100; game.player.x = 100; game.player.y = -150; game.player.vx = 0; game.player.vy = 0; enemies = []; game.isDead = false; document.getElementById('deathScreen').style.display = 'none';
+            game.player.hp = 100; game.player.x = 100; game.player.y = -150; game.player.vx = 0; game.player.vy = 0; game.isDead = false; document.getElementById('deathScreen').style.display = 'none';
         });
 
-        // --- ENVIAR COORDENADAS PRO SERVIDOR PYTHON ---
         function sendPlayerDataToServer() {
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(jsonPackage("move", {
+            if (socket.readyState === WebSocket.OPEN && hasJoined) {
+                socket.send(JSON.stringify({
+                    type: "move",
                     x: game.player.x, y: game.player.y, angle: game.player.angle,
                     isMining: game.player.isMining, miningSwing: game.player.miningSwing, hp: game.player.hp
                 }));
             }
         }
 
-        function jsonPackage(type, extra) { return JSON.stringify(Object.assign({type: type}, extra)); }
-
         function update() {
+            if (!hasJoined) { requestAnimationFrame(update); return; }
             if (game.isDead) { draw(); requestAnimationFrame(update); return; }
 
             if (Date.now() - lastRegenTime >= 1000) {
@@ -352,8 +433,18 @@
                 if (game.player.miningSwing >= Math.PI * 2) { game.player.miningSwing = 0; executeMineStrike(); }
             } else { game.player.isMining = false; game.player.miningSwing = 0; }
 
-            sendPlayerDataToServer(); // Envia movimentos pro servidor Python
-            manageDynamicEnemies();
+            // Verifica colisão e dano contra os monstros sincronizados do servidor
+            for(let e of serverEnemies) {
+                let distToPlayer = Math.hypot(game.player.x - e.x, game.player.y - e.y);
+                if (distToPlayer < e.radius + game.player.radius && game.player.invulnFrames === 0) {
+                    game.player.hp -= e.damage;
+                    game.player.invulnFrames = 25;
+                    createPhysicalParticles(game.player.x, game.player.y, "#ff1111", 12);
+                    if (game.player.hp <= 0) { handlePlayerDeath(); break; }
+                }
+            }
+
+            sendPlayerDataToServer();
 
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i]; p.vy += 0.22; p.x += p.vx;
@@ -363,33 +454,6 @@
                 p.alpha -= p.decay; if (p.alpha <= 0 || p.bounceCount > 4) particles.splice(i, 1);
             }
 
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let e = enemies[i]; let distToPlayer = Math.hypot(game.player.x - e.x, game.player.y - e.y);
-                if (e.type === "demon_eye") {
-                    let dx = game.player.x - e.x; let dy = game.player.y - e.y; let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist > 0) { e.vx += (dx / dist) * 0.15; e.vy += (dy / dist) * 0.15; }
-                    e.vx *= 0.96; e.vy *= 0.96; e.x += e.vx * e.speed;
-                    if(checkTileCollision(e.x, e.y, e.radius).length > 0) { e.x -= e.vx * e.speed; e.vx = -e.vx * 0.6; }
-                    e.y += e.vy * e.speed;
-                    if(checkTileCollision(e.x, e.y, e.radius).length > 0) { e.y -= e.vy * e.speed; e.vy = -e.vy * 0.6; }
-                } 
-                else if (e.type === "zombie") {
-                    e.vy += GRAVITY; e.y += e.vy; if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.y -= e.vy; e.vy = 0; }
-                    if (distToPlayer < 500) {
-                        let dirX = game.player.x > e.x ? 1 : -1; e.x += dirX * e.speed;
-                        if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.x -= dirX * e.speed; if (checkTileCollision(e.x, e.y + 2, e.radius).length > 0) e.vy = -5.8; }
-                    }
-                } 
-                else if (e.type === "lava_slime") {
-                    e.vy += GRAVITY; e.y += e.vy; let slimeGrounded = false; if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.y -= e.vy; e.vy = 0; slimeGrounded = true; }
-                    if (distToPlayer < 500) { let dirX = game.player.x > e.x ? 1 : -1; if (slimeGrounded) { e.vx = dirX * e.speed; e.vy = -4.5 - Math.random() * 3; } }
-                    e.x += e.vx; e.vx *= 0.92; if (checkTileCollision(e.x, e.y, e.radius).length > 0) { e.x -= e.vx; e.vx = 0; }
-                }
-                if (distToPlayer < e.radius + game.player.radius && game.player.invulnFrames === 0) {
-                    game.player.hp -= e.damage; game.player.invulnFrames = 25; createPhysicalParticles(game.player.x, game.player.y, "#ff1111", 12); if (game.player.hp <= 0) { handlePlayerDeath(); break; }
-                }
-            }
-
             draw(); updateHUD(); requestAnimationFrame(update);
         }
 
@@ -397,11 +461,19 @@
             let maxRange = (TILE_SIZE * 1.6) * (1 + (game.upgrades.range.lvl - 1) * 0.2);
             let dist = Math.hypot(mouse.worldX - game.player.x, mouse.worldY - game.player.y);
 
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let e = enemies[i];
+            // Ataque nos monstros sincronizados do servidor
+            for (let e of serverEnemies) {
                 if (Math.hypot(e.x - mouse.worldX, e.y - mouse.worldY) < e.radius + 25 && dist <= maxRange) {
-                    e.hp -= game.upgrades.damage.lvl * 4; createPhysicalParticles(e.x, e.y, e.color, 8);
-                    if (e.hp <= 0) { createPhysicalParticles(e.x, e.y, e.color, 18); game.money += 25; enemies.splice(i, 1); }
+                    let damageDealt = game.upgrades.damage.lvl * 4;
+                    createPhysicalParticles(e.x, e.y, e.color, 8);
+                    
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({
+                            type: "enemy_hit",
+                            enemyId: e.id,
+                            damage: damageDealt
+                        }));
+                    }
                     return;
                 }
             }
@@ -420,10 +492,10 @@
                         if (targetBlock.type === 1 || targetBlock.type === 10) game.inventory.stone++; else game.inventory[oreTypes[targetBlock.type].id]++;
                         let freshAir = { type: 0, hp: 0, maxHp: 0 };
                         brokenBlocks[key] = freshAir;
-                        if(socket.readyState === WebSocket.OPEN) socket.send(jsonPackage("block_update", {key: key, blockData: freshAir}));
+                        if(socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({type: "block_update", key: key, blockData: freshAir}));
                     } else {
                         brokenBlocks[key] = targetBlock;
-                        if(socket.readyState === WebSocket.OPEN) socket.send(jsonPackage("block_update", {key: key, blockData: targetBlock}));
+                        if(socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({type: "block_update", key: key, blockData: targetBlock}));
                     }
                 }
             }
@@ -444,7 +516,7 @@
                         let newStone = { type: 1, hp: 3, maxHp: 3 };
                         let key = `${tileX},${tileY}`;
                         brokenBlocks[key] = newStone; game.inventory.stone--; createPhysicalParticles(mouse.worldX, mouse.worldY, oreTypes[1].color, 4);
-                        if(socket.readyState === WebSocket.OPEN) socket.send(jsonPackage("block_update", {key: key, blockData: newStone}));
+                        if(socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({type: "block_update", key: key, blockData: newStone}));
                     }
                 }
             }
@@ -462,6 +534,7 @@
             let startY = Math.floor((-camY) / TILE_SIZE) - 1; let endY = Math.ceil((canvas.height - camY) / TILE_SIZE) + 1;
             let startX = Math.floor((-camX) / TILE_SIZE) - 1; let endX = Math.ceil((canvas.width - camX) / TILE_SIZE) + 1;
 
+            // Desenha os Blocos visíveis
             for (let y = startY; y < endY; y++) {
                 for (let x = startX; x < endX; x++) {
                     let block = getBlockAt(x, y);
@@ -475,86 +548,100 @@
                 }
             }
 
-            // --- RENDERIZAR OUTROS JOGADORES CONECTADOS ---
+            // Desenha Outros Jogadores
             for (let id in otherPlayers) {
                 let p = otherPlayers[id];
                 ctx.save(); ctx.translate(p.x, p.y);
-                // Jogadores da rede aparecem em azul escuro/ciano para diferenciar de você
-                ctx.fillStyle = "#0288d1"; ctx.beginPath(); ctx.arc(0, 0, game.player.radius, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = "#002f6c"; ctx.lineWidth = 3; ctx.stroke();
                 
-                // Olhos do outro jogador
+                ctx.fillStyle = p.color || "#0288d1"; 
+                ctx.beginPath(); ctx.arc(0, 0, game.player.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5; ctx.stroke();
+                
+                ctx.fillStyle = "#fff"; ctx.font = "bold 11px monospace"; ctx.textAlign = "center";
+                ctx.fillText(p.name || "Invasor", 0, -22);
+
                 ctx.save(); ctx.rotate(p.angle);
                 ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.arc(7, 5, 4, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.arc(9, -5, 1.8, 0, Math.PI * 2); ctx.arc(9, 5, 1.8, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
 
-                // Picareta do outro jogador animada
                 ctx.save(); ctx.rotate(p.angle);
                 if (p.isMining) ctx.rotate(Math.sin(p.miningSwing * 2) * 0.7);
                 ctx.fillStyle = "#5d4037"; ctx.fillRect(8, -2, 22, 5);
-                ctx.fillStyle = "#b0bec5"; ctx.beginPath(); ctx.moveTo(26, -14); ctx.lineTo(32, 0); ctx.lineTo(26, 14); ctx.lineTo(23, 0); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = "#b0bec5"; ctx.beginPath(); ctx.moveTo(26, -14); ctx.lineTo(34, -2); ctx.lineTo(26, 10); ctx.fill();
                 ctx.restore();
                 ctx.restore();
             }
 
-            for (let e of enemies) {
-                ctx.fillStyle = e.color; ctx.save(); ctx.translate(e.x, e.y);
-                if (e.type === "demon_eye") { ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#ff3333"; ctx.beginPath(); ctx.arc(4, 0, e.radius/2, 0, Math.PI * 2); ctx.fill(); }
-                else if (e.type === "lava_slime") { ctx.beginPath(); ctx.ellipse(0, 2, e.radius * 1.2, e.radius, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#ffeb3b"; ctx.fillRect(-4, -2, 2, 2); ctx.fillRect(2, -2, 2, 2); }
-                else { ctx.fillRect(-e.radius, -e.radius, e.radius * 2, e.radius * 2); ctx.strokeStyle = "#1b5e20"; ctx.lineWidth = 2; ctx.strokeRect(-e.radius, -e.radius, e.radius * 2, e.radius * 2); }
+            // Desenha Monstros do Servidor
+            for(let e of serverEnemies) {
+                ctx.save(); ctx.translate(e.x, e.y);
+                ctx.fillStyle = e.color;
+                
+                if (e.type === "demon_eye") {
+                    ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(3, 0, 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#f44336"; ctx.beginPath(); ctx.arc(5, 0, 2.5, 0, Math.PI * 2); ctx.fill();
+                } else if(e.type === "lava_slime") {
+                    ctx.beginPath(); ctx.ellipse(0, 4, e.radius * 1.2, e.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#ffeb3b"; ctx.fillRect(-4, -2, 2, 2); ctx.fillRect(4, -2, 2, 2);
+                } else { 
+                    ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-4, -3, 2, 0, Math.PI * 2); ctx.arc(4, -3, 2, 0, Math.PI * 2); ctx.fill();
+                }
+
+                let hpPct = e.hp / e.maxHp;
+                ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(-15, -22, 30, 4);
+                ctx.fillStyle = "#ff3333"; ctx.fillRect(-15, -22, 30 * hpPct, 4);
+
                 ctx.restore();
             }
 
             for (let p of particles) { ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
 
-            if (!game.isDead) {
-                ctx.save(); ctx.translate(game.player.x, game.player.y);
-                if (game.player.invulnFrames % 4 < 2) {
-                    ctx.fillStyle = "#e64a19"; ctx.beginPath(); ctx.arc(0, 0, game.player.radius, 0, Math.PI * 2); ctx.fill();
-                    ctx.strokeStyle = "#2d1a15"; ctx.lineWidth = 3; ctx.stroke();
-                    ctx.save(); ctx.rotate(game.player.angle);
-                    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.arc(7, 5, 4, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.arc(9, -5, 1.8, 0, Math.PI * 2); ctx.arc(9, 5, 1.8, 0, Math.PI * 2); ctx.fill();
-                    ctx.restore();
-                    ctx.save(); ctx.rotate(game.player.angle);
-                    if (game.player.isMining) { ctx.rotate(Math.sin(game.player.miningSwing * 2) * 0.7); }
-                    ctx.fillStyle = "#5d4037"; ctx.fillRect(8, -2, 22, 5);
-                    ctx.fillStyle = "#b0bec5"; ctx.beginPath(); ctx.moveTo(26, -14); ctx.lineTo(32, 0); ctx.lineTo(26, 14); ctx.lineTo(23, 0); ctx.closePath(); ctx.fill();
-                    ctx.restore();
-                }
+            // Desenha o Próprio Jogador (Customizado)
+            ctx.save(); ctx.translate(game.player.x, game.player.y);
+            if (game.player.invulnFrames % 4 < 2) {
+                ctx.fillStyle = game.playerColor; 
+                ctx.beginPath(); ctx.arc(0, 0, game.player.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
+                
+                ctx.fillStyle = "#ffb300"; ctx.font = "bold 11px monospace"; ctx.textAlign = "center";
+                ctx.fillText(game.playerName, 0, -22);
+
+                ctx.save(); ctx.rotate(game.player.angle);
+                ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.arc(7, 5, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.arc(9, -5, 1.8, 0, Math.PI * 2); ctx.arc(9, 5, 1.8, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+
+                ctx.save(); ctx.rotate(game.player.angle);
+                if (game.player.isMining) ctx.rotate(Math.sin(game.player.miningSwing * 2) * 0.7);
+                ctx.fillStyle = "#5d4037"; ctx.fillRect(8, -2, 22, 5);
+                ctx.fillStyle = "#cfd8dc"; ctx.beginPath(); ctx.moveTo(26, -14); ctx.lineTo(34, -2); ctx.lineTo(26, 10); ctx.fill();
                 ctx.restore();
             }
+            ctx.restore();
             ctx.restore();
         }
 
         function updateHUD() {
-            let currentWeight = Object.values(game.inventory).reduce((a, b) => a + b, 0);
             document.getElementById('hudHp').textContent = Math.max(0, game.player.hp);
             document.getElementById('hudDepth').textContent = Math.max(0, Math.floor(game.player.y / TILE_SIZE));
             document.getElementById('hudMoney').textContent = `$${game.money}`;
+            let currentWeight = Object.values(game.inventory).reduce((a,b) => a+b, 0);
             document.getElementById('hudWeight').textContent = currentWeight;
             document.getElementById('hudMaxWeight').textContent = game.upgrades.cargo.maxWeight + (game.upgrades.cargo.lvl - 1) * 10;
         }
 
         function updateMenuUI() {
-            let invDiv = document.getElementById('invDisplay');
-            invDiv.innerHTML = `
-                <div class="inventory-item"><span>🪨 Pedra:</span> <b>${game.inventory.stone}</b></div>
-                <div class="inventory-item"><span>🔸 Cobre:</span> <b>${game.inventory.copper}</b></div>
-                <div class="inventory-item"><span>🪙 Ferro:</span> <b>${game.inventory.iron}</b></div>
-                <div class="inventory-item"><span>💛 Ouro:</span> <b>${game.inventory.gold}</b></div>
-                <div class="inventory-item"><span>💎 Diamante:</span> <b>${game.inventory.diamond}</b></div>
-            `;
-            const syncBtn = (btnId, labelId, upgradeData, title, desc) => {
-                let btn = document.getElementById(btnId); document.getElementById(labelId).innerHTML = `<p>${title} (Lvl ${upgradeData.lvl})</p><span>${desc}</span>`;
-                btn.textContent = `$${upgradeData.cost}`; btn.disabled = game.money < upgradeData.cost;
-            };
-            syncBtn('btn-up1', 'lbl-up1', game.upgrades.damage, "Têmpera", `Dano: +${game.upgrades.damage.lvl}`);
-            syncBtn('btn-up2', 'lbl-up2', game.upgrades.speed, "Botas", `Velocidade +12%`);
-            syncBtn('btn-up3', 'lbl-up3', game.upgrades.range, "Cabo", `Alcance +20%`);
-            syncBtn('btn-up4', 'lbl-up4', game.upgrades.cargo, "Mochila", `${game.upgrades.cargo.maxWeight + (game.upgrades.cargo.lvl - 1) * 10}kg`);
-            document.getElementById('btn-food-cookie').disabled = game.money < 3; document.getElementById('btn-food-bread').disabled = game.money < 12; document.getElementById('btn-food-chicken').disabled = game.money < 20;
+            const invDisplay = document.getElementById('invDisplay'); invDisplay.innerHTML = "";
+            Object.keys(game.inventory).forEach(k => {
+                if (game.inventory[k] > 0) { invDisplay.innerHTML += `<div class="inventory-item"><span>${k.toUpperCase()}</span><strong>${game.inventory[k]} kg</strong></div>`; }
+            });
+            document.getElementById('btn-up1').textContent = `$${game.upgrades.damage.cost}`; document.getElementById('lbl-up1').textContent = `Dano +1 (Nível ${game.upgrades.damage.lvl})`;
+            document.getElementById('btn-up2').textContent = `$${game.upgrades.speed.cost}`; document.getElementById('lbl-up2').textContent = `Velocidade +15% (Nível ${game.upgrades.speed.lvl})`;
+            document.getElementById('btn-up3').textContent = `$${game.upgrades.range.cost}`; document.getElementById('lbl-up3').textContent = `Alcance +20% (Nível ${game.upgrades.range.lvl})`;
+            document.getElementById('btn-up4').textContent = `$${game.upgrades.cargo.cost}`; document.getElementById('lbl-up4').textContent = `Carga +10kg (Nível ${game.upgrades.cargo.lvl})`;
         }
 
         function bindFoodItem(btnId, cost, healAmount) {
@@ -567,15 +654,15 @@
         document.getElementById('sellAllBtn').addEventListener('click', () => {
             let totalGain = 0;
             Object.keys(game.inventory).forEach(key => { let oreConfig = Object.values(oreTypes).find(o => o.id === key); if (oreConfig) { totalGain += game.inventory[key] * oreConfig.val; game.inventory[key] = 0; } });
-            game.money += totalGain; updateMenuUI();
+            game.money += totalGain; updateMenuUI(); updateHUD();
         });
 
         function bindUpgrade(btnId, upgradeKey, costScale) {
             document.getElementById(btnId).addEventListener('click', () => {
-                let up = game.upgrades[upgradeKey]; if (game.money >= up.cost) { game.money -= up.cost; up.lvl++; up.cost = Math.round(up.cost * costScale); updateMenuUI(); }
+                let up = game.upgrades[upgradeKey]; if (game.money >= up.cost) { game.money -= up.cost; up.lvl++; up.cost = Math.round(up.cost * costScale); updateMenuUI(); updateHUD(); }
             });
         }
-        bindUpgrade('btn-up1', 'damage', 1.45); bindUpgrade('btn-up2', 'speed', 1.4); bindUpgrade('btn-up3', 'range', 1.5); bindUpgrade('btn-up4', 'cargo', 1.35);
+        bindUpgrade('btn-up1', 'damage', 1.6); bindUpgrade('btn-up2', 'speed', 1.5); bindUpgrade('btn-up3', 'range', 1.5); bindUpgrade('btn-up4', 'cargo', 1.4);
 
         requestAnimationFrame(update);
     </script>
